@@ -7,9 +7,10 @@ import {
   MenuItem,
   MenuList,
   Select,
-  VStack,
   Text,
+  VStack,
 } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 
 interface Props {
   method: string;
@@ -18,12 +19,35 @@ interface Props {
   setTopN: (topN: number) => void;
 }
 
+const playfulTexts = [
+  "Buckle up, bookworms! These tales are about to take you on an epic adventure!",
+  "Who needs a magic carpet? These books are your next ride to fantastic worlds!",
+  "Ready for a plot twist? These page-turners are lined up and ready to blow your mind!",
+  "Calling all literary explorers! Discover your next book treasure right here!",
+  "Wave goodbye to boredom. These books are the party your shelves have been waiting for!",
+  "Hungry for a good story? Feast your eyes on these delicious reads!",
+  "As the pages turn... Here are stories that'll make your heart yearn!",
+  "Don’t judge a book by its cover, but go ahead and judge these – they’re all winners!",
+  "Cure for the common read? Look no further, these books have everything you need!",
+  "Step right up to the buffet of books where every pick is a chef's kiss!",
+  "Psst... your bookshelf is about to get jealous. Check out these new reads!",
+];
+
 const BookRecommenderSection = ({
   method,
   setMethod,
   topN,
   setTopN,
 }: Props) => {
+  const [randomText, setRandomText] = useState("");
+
+  useEffect(() => {
+    const getRandomText = () => {
+      const randomIndex = Math.floor(Math.random() * playfulTexts.length);
+      return playfulTexts[randomIndex];
+    };
+    setRandomText(getRandomText());
+  }, []);
   return (
     <Box as="section" maxW="6xl" mx="auto" px={4} py={6} width="full">
       <VStack
@@ -36,7 +60,7 @@ const BookRecommenderSection = ({
           fontWeight="bold"
           textAlign={{ base: "center", md: "left" }}
         >
-          Here's some books we think you'll also enjoy:
+          {randomText}
         </Text>
         <HStack
           spacing={4}

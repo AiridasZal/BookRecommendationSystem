@@ -91,7 +91,7 @@ const BookRecommendationSection = ({
                 </VStack>
                 <Button
                   as={RouterLink}
-                  to={`/books/${book.book_id}`}
+                  to={`/book/${book.book_id}`}
                   colorScheme="blue"
                   size="sm"
                   mt={{ base: 2, md: 0 }}
