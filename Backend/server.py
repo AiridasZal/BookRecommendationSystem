@@ -11,10 +11,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 from sklearn.neighbors import NearestNeighbors
 
-# set FLASK_APP=server
-# set FLASK_ENV=development
-# flask run
-
 app = Flask(__name__)
 CORS(app)
 app.logger.setLevel(logging.INFO)

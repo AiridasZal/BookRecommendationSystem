@@ -7,6 +7,7 @@ import {
   VStack,
   Text,
   Image,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { formatAuthors } from "../services/formatAuthors";
 import StarRating from "./StarRating";
@@ -18,8 +19,7 @@ interface Props {
   data: RecommendationResult[] | undefined;
   isLoading: boolean;
   isError: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error: any;
+  error: unknown;
 }
 
 const BookRecommendationSection = ({
@@ -28,13 +28,14 @@ const BookRecommendationSection = ({
   isError,
   error,
 }: Props) => {
+  const RecommendationHover = useColorModeValue("gray.50", "gray.700");
   if (isLoading) {
     return <RecommendationSkeleton />;
   }
   if (isError) {
     return (
       <Text color="red.500">
-        Error loading recommendations: {error?.message}
+        Error loading recommendations: {(error as Error)?.message}
       </Text>
     );
   }
@@ -54,7 +55,7 @@ const BookRecommendationSection = ({
                 p={4}
                 borderWidth="1px"
                 borderRadius="lg"
-                _hover={{ bg: "gray.50" }}
+                _hover={{ bg: RecommendationHover }}
               >
                 <Box
                   minW={{ base: "75px", md: "100px" }}
