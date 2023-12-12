@@ -8,7 +8,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
+from sklearn.metrics.pairwise import linear_kernel
 from sklearn.neighbors import NearestNeighbors
 
 app = Flask(__name__)
@@ -101,28 +101,42 @@ def collaborative_recommendations(book_id, top_n=10):
 # ---------------------------------------------------------------------------------------------------------------- #
 # Content-Based recommendations
 # ---------------------------------------------------------------------------------------------------------------- #
-app.logger.info('Initializing content-based recommendation method')
-books_df['combined_features'] = books_df['description'] + " " + books_df['genres']
+books_df['content'] = (pd.Series(books_df[['authors', 'title', 'genres', 'description']]
+                                  .fillna('')
+                                  .values.tolist()
+                                  ).str.join(' '))
 
-tfidf = TfidfVectorizer(stop_words='english')
-tfidf_matrix = tfidf.fit_transform(books_df['combined_features'])
-
-cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+tf_content = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0., stop_words='english')
+tfidf_matrix = tf_content.fit_transform(books_df['content'])
+cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
 def content_based_recommendations(book_id, top_n=10, cosine_sim=cosine_sim, df=books_df):
     if book_id not in df['book_id'].values:
         return pd.DataFrame()
 
-    idx = df.index[df['book_id'] == book_id].tolist()[0]
+    book_id_to_index = pd.Series(df.index, index=df['book_id'])
+    
+    idx = book_id_to_index[book_id]
+
     sim_scores = list(enumerate(cosine_sim[idx]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
     top_n = min(top_n, len(sim_scores) - 1)
     sim_scores = sim_scores[1:top_n+1]
-
+    
     book_indices = [i[0] for i in sim_scores]
+    books_subset = df.iloc[book_indices][['book_id', 'title', 'authors', 'average_rating', 'ratings_count']]
 
-    return df.iloc[book_indices]
+    v = books_subset['ratings_count']
+    m = books_subset['ratings_count'].quantile(0.75)
+    R = books_subset['average_rating']
+    C = books_subset['average_rating'].median()
+    books_subset['new_score'] = (v / (v + m) * R) + (m / (m + v) * C)
+
+    high_rating = books_subset[books_subset['ratings_count'] >= m]
+    high_rating = high_rating.sort_values('new_score', ascending=False)
+
+    return df.loc[high_rating.index]
 
 # ---------------------------------------------------------------------------------------------------------------- #
 # Hybrid method
