@@ -110,7 +110,7 @@ tf_content = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0., sto
 tfidf_matrix = tf_content.fit_transform(books_df['content'])
 cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
-def content_based_recommendations(book_id, top_n=10, cosine_sim=cosine_sim, df=books_df):
+def content_based_recommendations(book_id, top_n=50, cosine_sim=cosine_sim, df=books_df):
     if book_id not in df['book_id'].values:
         return pd.DataFrame()
 
@@ -143,7 +143,7 @@ def content_based_recommendations(book_id, top_n=10, cosine_sim=cosine_sim, df=b
 # ---------------------------------------------------------------------------------------------------------------- #
 app.logger.info('Combining collaborative and content-based recommendation methods into hybrid method')
 def hybrid_recommendations(book_id, top_n=10):
-    content_recommendations = content_based_recommendations(book_id, top_n=top_n)
+    content_recommendations = content_based_recommendations(book_id)
     collab_recommendations = collaborative_recommendations(book_id, top_n=top_n)
     hybrid_recommendations_df = pd.concat([content_recommendations, collab_recommendations]).drop_duplicates().head(top_n)
     return hybrid_recommendations_df
@@ -178,7 +178,7 @@ def recommend():
     try:
         recommendations = pd.DataFrame()
         if method == 'Content-Based':
-            recommendations = content_based_recommendations(book_id, top_n=top_n)
+            recommendations = content_based_recommendations(book_id)
         elif method == 'Collaborative':
             recommendations = collaborative_recommendations(book_id, top_n=top_n)
         elif method == 'Hybrid':

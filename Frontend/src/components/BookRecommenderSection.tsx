@@ -48,6 +48,15 @@ const BookRecommenderSection = ({
     };
     setRandomText(getRandomText());
   }, []);
+
+  useEffect(() => {
+    if (method === "Content-Based") {
+      setTopN(50);
+    } else if (topN >= 50) {
+      setTopN(10);
+    }
+  }, [method, setTopN, topN]);
+
   return (
     <Box as="section" maxW="6xl" mx="auto" px={4} py={6} width="full">
       <VStack
@@ -82,16 +91,18 @@ const BookRecommenderSection = ({
               <MenuItem onClick={() => setMethod("Hybrid")}>Hybrid</MenuItem>
             </MenuList>
           </Menu>
-          <Select
-            ml={2}
-            w="auto"
-            value={topN.toString()}
-            onChange={(e) => setTopN(parseInt(e.target.value, 10))}
-          >
-            <option value="5">5 Books</option>
-            <option value="10">10 Books</option>
-            <option value="15">15 Books</option>
-          </Select>
+          {method !== "Content-Based" && (
+            <Select
+              ml={2}
+              w="auto"
+              value={topN.toString()}
+              onChange={(e) => setTopN(parseInt(e.target.value, 10))}
+            >
+              <option value="5">5 Books</option>
+              <option value="10">10 Books</option>
+              <option value="15">15 Books</option>
+            </Select>
+          )}
         </HStack>
       </VStack>
     </Box>
