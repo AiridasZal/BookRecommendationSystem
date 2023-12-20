@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient, Book } from "../services/api-client";
+import { apiClient, BookDetails } from "../services/api-client";
 
 export const useSearchBooks = (query: string) => {
-  return useQuery<Book[], Error>({
+  return useQuery<BookDetails[], Error>({
     queryKey: ["searchBooks", query],
     queryFn: () => apiClient.searchBooks(query),
     enabled: !!query,
