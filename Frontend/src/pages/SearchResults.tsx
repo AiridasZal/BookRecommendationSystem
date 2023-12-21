@@ -36,6 +36,11 @@ function SearchResults() {
           width="100%"
           maxWidth="6xl"
           mx="auto"
+          sx={{
+            "@media screen and (min-width: 760px) and (max-width: 960px)": {
+              gridTemplateColumns: "repeat(2, 1fr)",
+            },
+          }}
         >
           {data.map((book) => (
             <BookCard key={book.book_id} book={book} />
