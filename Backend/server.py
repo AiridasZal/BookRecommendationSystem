@@ -230,5 +230,13 @@ def book_details(book_id):
 
     return jsonify(book_detail_json), 200
 
+@app.route("/")
+def hello() -> str:
+    """Return a friendly HTTP greeting.
+
+    Returns:
+        A string with the words 'Hello World!'.
+    """
+    return "Hello World!"
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True)
