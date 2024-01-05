@@ -30,61 +30,52 @@ export interface RecommendationResult {
 
 const BASE_URL = process.env.REACT_APP_BACKEND_DOMAIN;
 
-export const apiClient = {
-  async searchBooks(query: string): Promise<BookDetails[]> {
-    try {
-      if (!query) throw new Error("No query provided");
-      const response = await axios.get(`${BASE_URL}/search?query=${query}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          switch (error.response.status) {
-            case 400:
-              throw new Error("Bad request. Please check your query.");
-            case 404:
-              throw new Error("No results found for the given query.");
-            case 500:
-              throw new Error("Server error. Please try again later.");
-            default:
-              throw new Error("An unexpected error occurred.");
-          }
-        }
-      }
-      throw new Error("An error occurred while fetching data.");
-    }
-  },
-  async getBookDetails(bookId: string): Promise<BookDetails> {
-    try {
-      if (!bookId) throw new Error("No book ID provided");
-      const response = await axios.get(`${BASE_URL}/book/${bookId}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          switch (error.response.status) {
-            case 400:
-              throw new Error("Bad request. Please check your query.");
-            case 404:
-              throw new Error("No details found for this book.");
-            case 500:
-              throw new Error("Server error. Please try again later.");
-            default:
-              throw new Error("An unexpected error occurred.");
-          }
-        }
-      }
-      throw new Error("An error occurred while fetching data.");
-    }
-  },
-  async getRecommendations({
-    bookId,
-    method,
-    topN,
-  }: RecommendationParams): Promise<RecommendationResult[]> {
-    const response = await axios.get(`${BASE_URL}/recommend`, {
-      params: { book_id: bookId, method, top_n: topN },
-    });
+function camelToSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
+function transformParams(params: object): object {
+  const newParams: Record<string, unknown> = {};
+  Object.keys(params).forEach((key) => {
+    newParams[camelToSnakeCase(key)] = params[key as keyof typeof params];
+  });
+  return newParams;
+}
+
+async function apiRequest<T>(url: string, params?: object): Promise<T> {
+  try {
+    const response = await axios.get<T>(`${BASE_URL}/${url}`, { params });
     return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+  throw new Error("An error occurred while fetching data.");
+}
+
+function handleApiError(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
+    }
+    const message = error.response?.data.message || error.message;
+    throw new Error(message);
+  }
+  throw new Error("An error occurred while fetching data.");
+}
+
+export const apiClient = {
+  searchBooks(query: string): Promise<BookDetails[]> {
+    if (!query) throw new Error("No query provided");
+    return apiRequest<BookDetails[]>("search", { query });
+  },
+  getBookDetails(bookId: string): Promise<BookDetails> {
+    if (!bookId) throw new Error("No book ID provided");
+    return apiRequest<BookDetails>(`book/${bookId}`);
+  },
+  async getRecommendations(
+    params: RecommendationParams
+  ): Promise<RecommendationResult[]> {
+    const transformedParams = transformParams(params);
+    return apiRequest<RecommendationResult[]>("recommend", transformedParams);
   },
 };
