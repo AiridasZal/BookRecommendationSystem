@@ -18,10 +18,12 @@ const SearchInput = () => {
   const handleSearch = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     if (searchInputRef.current) {
-      setSearchText(searchInputRef.current.value);
-      navigate(
-        `/search?query=${encodeURIComponent(searchInputRef.current.value)}`
-      );
+      const query = searchInputRef.current.value.trim();
+      if (query) {
+        setSearchText(query);
+        navigate(`/search?query=${encodeURIComponent(query)}`);
+      }
+      throw new Error("You must enter a search term.");
     }
   };
 
