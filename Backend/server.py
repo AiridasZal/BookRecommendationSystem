@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import string
-
+# import pickle
 import pandas as pd
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -60,6 +60,12 @@ app.logger.info('Title vectorization')
 tfidf_vectorizer = TfidfVectorizer(stop_words='english')
 tfidf_matrix_titles = tfidf_vectorizer.fit_transform(books_df['normalized_title'])
 
+# Save the TF-IDF vectorizer and matrix
+# with open('tfidf_vectorizer.pkl', 'wb') as f:
+#     pickle.dump(tfidf_vectorizer, f)
+# with open('tfidf_matrix_titles.pkl', 'wb') as f:
+#     pickle.dump(tfidf_matrix_titles, f)
+
 def search_similar_books_by_title(query, df=books_df, tfidf_matrix=tfidf_matrix_titles, top_n=12, similarity_threshold=0.1):
     processed = re.sub("[^a-zA-Z0-9 ]", "", query.lower())
     query_vec = tfidf_vectorizer.transform([processed])
@@ -84,8 +90,16 @@ user_item_matrix = user_ratings_df.pivot(index='user_id', columns='book_id', val
 user_item_matrix_sparse = csr_matrix(user_item_matrix.values)
 user_item_matrix_sparse_T = user_item_matrix_sparse.transpose()
 
+# Save the user-item matrix
+# with open('user_item_matrix_sparse_T.pkl', 'wb') as f:
+#     pickle.dump(user_item_matrix_sparse_T, f)
+
 model_knn = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=20, n_jobs=-1)
 model_knn.fit(user_item_matrix_sparse_T)
+
+# Save the KNN model
+# with open('model_knn.pkl', 'wb') as f:
+#     pickle.dump(model_knn, f)
 
 book_id_to_idx = {book_id: idx for idx, book_id in enumerate(user_item_matrix.columns)}
 
@@ -101,6 +115,7 @@ def collaborative_recommendations(book_id, top_n=10):
 # ---------------------------------------------------------------------------------------------------------------- #
 # Content-Based recommendations
 # ---------------------------------------------------------------------------------------------------------------- #
+app.logger.info('Initializing content based filtering recommendation method')
 books_df['content'] = (pd.Series(books_df[['authors', 'title', 'genres', 'description']]
                                   .fillna('')
                                   .values.tolist()
@@ -108,6 +123,11 @@ books_df['content'] = (pd.Series(books_df[['authors', 'title', 'genres', 'descri
 
 tf_content = TfidfVectorizer(analyzer='word', ngram_range=(1, 2), min_df=0., stop_words='english')
 tfidf_matrix = tf_content.fit_transform(books_df['content'])
+
+# Save the content-based TF-IDF matrix
+# with open('tfidf_matrix_content.pkl', 'wb') as f:
+#     pickle.dump(tfidf_matrix, f)
+
 cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
 
 def content_based_recommendations(book_id, top_n=50, cosine_sim=cosine_sim, df=books_df):
@@ -152,8 +172,10 @@ app.logger.info('Server ready for use!')
 
 @app.route('/search', methods=['GET']) # /search?query=... (query is a string) returns a list of books
 def search():
-    app.logger.info('search')
+    app.logger.info('Search endpoint called')
     query = request.args.get('query', None)
+    processed_query = re.sub("[^a-zA-Z0-9 ]", "", query.lower())
+    app.logger.info(f'Query: {processed_query}')
     if not query:
         return jsonify({"error": "No query parameter provided"}), 400
     try:
