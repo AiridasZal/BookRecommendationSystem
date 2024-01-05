@@ -1,6 +1,13 @@
-import { Box, HStack, Skeleton, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Skeleton,
+  VStack,
+  useColorModeValue,
+} from "@chakra-ui/react";
 
 const RecommendationSkeleton = () => {
+  const RecommendationHover = useColorModeValue("gray.50", "gray.700");
   return (
     <Box as="section" py={4}>
       <VStack spacing={4} align="stretch">
@@ -10,7 +17,7 @@ const RecommendationSkeleton = () => {
             p={4}
             borderWidth="1px"
             borderRadius="lg"
-            _hover={{ bg: "gray.50" }}
+            _hover={{ bg: RecommendationHover }}
             display="flex"
             flexDirection={{ base: "column", md: "row" }}
           >
